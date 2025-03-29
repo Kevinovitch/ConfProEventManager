@@ -1,0 +1,73 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Review Conference - ConfPro Event Manager{% endblock %}
+
+{% block body %}
+    <div class="mb-4">
+        <a href="{{ path('app_moderation_index') }}" class="btn btn-outline-secondary">
+            Back to Moderation Panel
+        </a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h1 class="h3 mb-0">{{ moderation_request.conference.title }}</h1>
+            <span class="badge bg-warning">Pending Moderation</span>
+        </div>
+        <div class="card-body">
+            <div class="mb-4">
+                <h5>Description</h5>
+                <p>{{ moderation_request.conference.description }}</p>
+            </div>
+
+            <div class="mb-4">
+                <h5>Details</h5>
+                <table class="table">
+                    <tbody>
+                    <tr>
+                        <th>Presenter</th>
+                        <td>{{ moderation_request.conference.presenter.name }} ({{ moderation_request.conference.presenter.email }})</td>
+                    </tr>
+                    <tr>
+                        <th>Submitted on</th>
+                        <td>{{ moderation_request.createdAt|date('Y-m-d H:i:s') }}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">Accept Conference</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>If this conference meets the quality standards, you can approve it for scheduling.</p>
+                            <form action="{{ path('app_moderation_accept', {'id': moderation_request.id}) }}" method="post">
+                                <button type="submit" class="btn btn-success w-100">Accept Conference</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card" id="reject-form">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="mb-0">Reject Conference</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>If this conference needs improvements, provide feedback to the presenter.</p>
+                            <form action="{{ path('app_moderation_reject', {'id': moderation_request.id}) }}" method="post">
+                                <div class="mb-3">
+                                    <label for="comments" class="form-label">Feedback</label>
+                                    <textarea name="comments" id="comments" rows="3" class="form-control" required placeholder="Explain why this conference is rejected and what can be improved..."></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-danger w-100">Reject with Feedback</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

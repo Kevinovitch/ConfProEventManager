@@ -1,0 +1,166 @@
+{# templates/conference/_workflow_status.html.twig #}
+
+{% if workflow_can(conference, 'to_validation') %}
+    <form method="post" action="{{ path('app_conferences_submit', {'id': conference.id}) }}" class="d-inline">
+        <button class="btn btn-sm btn-outline-primary" type="submit">
+            Submit for Validation
+        </button>
+    </form>
+{% endif %}
+
+{% if (is_granted('ROLE_MODERATOR') or is_granted('ROLE_ADMIN')) and conference.status == 'under_validation' %}
+    <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#scheduleModal">
+        Schedule Conference
+    </button>
+
+    {# Modal for scheduling #}
+    <div class="modal fade" id="scheduleModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="scheduleModalLabel">Schedule Conference</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" action="{{ path('app_conferences_schedule', {'id': conference.id}) }}">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="scheduledAt" class="form-label">Date and Time</label>
+                            <input type="datetime-local" class="form-control" id="scheduledAt" name="scheduledAt" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-success">Schedule Conference</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+{% if workflow_can(conference, 'to_archived') %}
+    <form method="post" action="{{ path('app_conferences_archive', {'id': conference.id}) }}" class="d-inline">
+        <button class="btn btn-sm btn-outline-info" type="submit" onclick="return confirm('Are you sure you want to archive this conference?')">
+            Archive Conference
+        </button>
+    </form>
+{% endif %}
+
+{% if workflow_can(conference, 'back_to_submitted') %}
+    <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#rejectModal">
+        Reject Conference
+    </button>
+
+    {# Modal for rejection comments #}
+    <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="rejectModalLabel">Reject Conference</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                {% if moderation_request is defined and moderation_request is not null %}
+                <form method="post" action="{{ path('app_moderation_reject', {'id': moderation_request.id}) }}">
+                {% else %}
+                <form method="post" action="#">
+                {% endif %}
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="comments" class="form-label">Feedback for the presenter</label>
+                            <textarea class="form-control" id="comments" name="comments" rows="5" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-warning">Reject Conference</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+{# Current workflow status display #}
+<div class="workflow-status mt-3">
+    <div class="d-flex align-items-center">
+        <strong class="me-2">Current Status:</strong>
+        <span class="badge {% if conference.status == 'submitted' %}bg-secondary{% elseif conference.status == 'under_validation' %}bg-warning{% elseif conference.status == 'scheduled' %}bg-success{% else %}bg-info{% endif %}">
+            {{ conference.status|capitalize|replace({'_': ' '}) }}
+        </span>
+    </div>
+
+    <div class="workflow-diagram mt-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="workflow-step {% if conference.status == 'submitted' %}active{% endif %} {% if workflow_has_marked_place(conference, 'submitted') %}completed{% endif %}">
+                <div class="step-marker">1</div>
+                <div class="step-label">Submitted</div>
+            </div>
+            <div class="workflow-connector"></div>
+            <div class="workflow-step {% if conference.status == 'under_validation' %}active{% endif %} {% if workflow_has_marked_place(conference, 'under_validation') %}completed{% endif %}">
+                <div class="step-marker">2</div>
+                <div class="step-label">Under Validation</div>
+            </div>
+            <div class="workflow-connector"></div>
+            <div class="workflow-step {% if conference.status == 'scheduled' %}active{% endif %} {% if workflow_has_marked_place(conference, 'scheduled') %}completed{% endif %}">
+                <div class="step-marker">3</div>
+                <div class="step-label">Scheduled</div>
+            </div>
+            <div class="workflow-connector"></div>
+            <div class="workflow-step {% if conference.status == 'archived' %}active{% endif %} {% if workflow_has_marked_place(conference, 'archived') %}completed{% endif %}">
+                <div class="step-marker">4</div>
+                <div class="step-label">Archived</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .workflow-step {
+        text-align: center;
+        position: relative;
+    }
+
+    .step-marker {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background-color: #e9ecef;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        font-weight: bold;
+    }
+
+    .step-label {
+        margin-top: 5px;
+        font-size: 0.8rem;
+    }
+
+    .workflow-connector {
+        flex-grow: 1;
+        height: 2px;
+        background-color: #e9ecef;
+        margin: 0 5px;
+    }
+
+    .workflow-step.active .step-marker {
+        background-color: #0d6efd;
+        color: white;
+    }
+
+    .workflow-step.completed .step-marker {
+        background-color: #198754;
+        color: white;
+    }
+
+    .workflow-step.active .step-label {
+        font-weight: bold;
+        color: #0d6efd;
+    }
+
+    .workflow-step.completed .step-label {
+        color: #198754;
+    }
+</style>

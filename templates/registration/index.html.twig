@@ -1,0 +1,53 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}My Registrations - ConfPro Event Manager{% endblock %}
+
+{% block body %}
+    <h1>My Registrations</h1>
+
+    {% if registrations is empty %}
+        <div class="alert alert-info">
+            You haven't registered for any conferences yet.
+            <a href="{{ path('app_conferences_index') }}">Browse available conferences</a>
+        </div>
+    {% else %}
+        <div class="row">
+            {% for registration in registrations %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">{{ registration.conference.title }}</h5>
+                            {% if registration.attended %}
+                                <span class="badge bg-success">Attended</span>
+                            {% endif %}
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">Registered on {{ registration.registeredAt|date('F j, Y') }}</p>
+
+                            {% if registration.conference.scheduledAt %}
+                                <p><strong>When:</strong> {{ registration.conference.scheduledAt|date('F j, Y') }}</p>
+                            {% else %}
+                                <p><em>Date not yet scheduled</em></p>
+                            {% endif %}
+
+                            <p><strong>Presenter:</strong> {{ registration.conference.presenter.name }}</p>
+
+                            {% if registration.conference.scheduledAt and registration.conference.scheduledAt > date() and not registration.attended %}
+                                <form method="post" action="{{ path('app_unregister_from_conference', {'id': registration.conference.id}) }}" class="mt-3">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to cancel your registration?')">
+                                        Cancel Registration
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer">
+                            <a href="{{ path('app_conferences_show', {'id': registration.conference.id}) }}" class="btn btn-primary">
+                                View Conference Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

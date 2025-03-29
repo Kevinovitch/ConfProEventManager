@@ -1,0 +1,238 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ conference.title }} - ConfPro Event Manager{% endblock %}
+
+{% block body %}
+    <div class="mb-4">
+        <a href="{{ path('app_conferences_index') }}" class="btn btn-outline-secondary">
+            Back to List
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h1>{{ conference.title }}</h1>
+            <span class="badge {% if conference.status == 'submitted' %}bg-secondary{% elseif conference.status == 'under_validation' %}bg-warning{% elseif conference.status == 'scheduled' %}bg-success{% else %}bg-info{% endif %}">
+                {{ conference.status|capitalize|replace({'_': ' '}) }}
+            </span>
+        </div>
+        <div class="card-body">
+            <div class="mb-4">
+                <h5>Description</h5>
+                <p>{{ conference.description }}</p>
+            </div>
+
+            <div class="mb-4">
+                <h5>Details</h5>
+                <table class="table">
+                    <tbody>
+                    <tr>
+                        <th>Presenter</th>
+                        <td>{{ conference.presenter.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Created At</th>
+                        <td>{{ conference.createdAt|date('Y-m-d H:i:s') }}</td>
+                    </tr>
+                    {% if conference.scheduledAt %}
+                        <tr>
+                            <th>Scheduled At</th>
+                            <td>{{ conference.scheduledAt|date('Y-m-d H:i:s') }}</td>
+                        </tr>
+                    {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h2 class="h5 mb-0">Workflow Status</h2>
+                </div>
+                <div class="card-body">
+                    {% include 'conference/_workflow_status.html.twig' with {'conference': conference, 'moderation_request': moderation_request} %}
+                </div>
+            </div>
+
+            {% if conference.presenter == app.user and conference.status == 'submitted' %}
+                <div class="d-flex justify-content-end">
+                    <form method="post" action="{{ path('app_conferences_submit', {'id': conference.id}) }}" class="me-2">
+                        <button class="btn btn-success">Submit for Validation</button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if conference.status == 'scheduled' %}
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h2 class="h5 mb-0">Registration</h2>
+            </div>
+            <div class="card-body">
+                {% if not app.user %}
+                    <div class="alert alert-info">
+                        <a href="{{ path('app_login') }}">Login</a> or <a href="{{ path('app_register') }}">Register</a> to sign up for this conference.
+                    </div>
+                {% else %}
+                    {% set isRegistered = false %}
+                    {% for registration in app.user.registrations %}
+                        {% if registration.conference.id == conference.id %}
+                            {% set isRegistered = true %}
+                            <div class="alert alert-success">
+                                <p>You are registered for this conference.</p>
+
+                                {% if registration.qrCode %}
+                                    <p class="mt-2">Your QR Code: <strong>{{ registration.qrCode }}</strong></p>
+                                    <p class="text-muted">Present this code at the venue for check-in.</p>
+                                {% endif %}
+
+                                {% if conference.scheduledAt and conference.scheduledAt > date() and not registration.attended %}
+                                    <form method="post" action="{{ path('app_unregister_from_conference', {'id': conference.id}) }}" class="mt-3">
+                                        <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Are you sure you want to cancel your registration?')">
+                                            Cancel Registration
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if not isRegistered %}
+                        <p>Register to attend this conference:</p>
+
+                        <form method="post" action="{{ path('app_register_for_conference', {'id': conference.id}) }}">
+                            <button type="submit" class="btn btn-primary">Register Now</button>
+                        </form>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
+    {% if is_granted('ROLE_ADMIN') %}
+        <div class="card mt-4">
+            <div class="card-header bg-dark text-white">
+                <h2 class="h5 mb-0">Administration</h2>
+            </div>
+            <div class="card-body">
+                <h3 class="h6">Notifications</h3>
+                <div class="d-flex gap-2">
+                    <form method="post" action="{{ path('app_notifications_send_reminders', {'id': conference.id}) }}">
+                        <button type="submit" class="btn btn-warning btn-sm">Send Reminders</button>
+                    </form>
+
+                    <form method="post" action="{{ path('app_notifications_send_feedback_requests', {'id': conference.id}) }}">
+                        <button type="submit" class="btn btn-info btn-sm">Send Feedback Requests</button>
+                    </form>
+                </div>
+                {% if conference.status == 'scheduled' %}
+                    <h3 class="h6 mt-3">Sessions</h3>
+                    <div class="d-flex gap-2">
+                        <a href="{{ path('app_sessions_new', {'conference': conference.id}) }}" class="btn btn-primary btn-sm">
+                            Add Session
+                        </a>
+                        <a href="{{ path('app_sessions_conference', {'id': conference.id}) }}" class="btn btn-outline-primary btn-sm">
+                            View Sessions
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
+    {% if conference.status == 'scheduled' or conference.status == 'archived' %}
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h2 class="h5 mb-0">Available Media</h2>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% set slidesCount = 0 %}
+                    {% set videosCount = 0 %}
+
+                    {% for media in conference.media %}
+                        {% if media.type == 'slides' %}
+                            {% set slidesCount = slidesCount + 1 %}
+                        {% elseif media.type == 'video' %}
+                            {% set videosCount = videosCount + 1 %}
+                        {% endif %}
+                    {% endfor %}
+
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h3 class="h6 mb-3">Slides</h3>
+                                {% if slidesCount > 0 %}
+                                    <p class="mb-1"><strong>{{ slidesCount }}</strong> presentation slides available</p>
+                                {% else %}
+                                    <p class="text-muted mb-1">No slides available yet</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h3 class="h6 mb-3">Videos</h3>
+                                {% if videosCount > 0 %}
+                                    <p class="mb-1"><strong>{{ videosCount }}</strong> video recordings available</p>
+                                {% else %}
+                                    <p class="text-muted mb-1">No videos available yet</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3 d-flex gap-2">
+                    <a href="{{ path('app_media_conference', {'id': conference.id}) }}" class="btn btn-primary">View All Media</a>
+
+                    {% if is_granted('ROLE_PRESENTER') and conference.presenter == app.user or is_granted('ROLE_ADMIN') %}
+                        <a href="{{ path('app_media_upload', {'id': conference.id}) }}" class="btn btn-outline-primary">Upload New Media</a>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+{#        {% endif %}#}
+
+        <div class="card mt-4">
+            <div class="card-header bg-primary text-white">
+                <h2 class="h5 mb-0">Feedback</h2>
+            </div>
+            <div class="card-body">
+                {% if app.user and isRegistered is defined and isRegistered %}
+                    {% set hasAttended = false %}
+                    {% set attendedRegistration = null %}
+                    {% for registration in app.user.registrations %}
+                        {% if registration.conference.id == conference.id and registration.attended %}
+                            {% set hasAttended = true %}
+                            {% set attendedRegistration = registration %}
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if hasAttended and attendedRegistration %}
+                        <a href="{{ path('app_feedback_submit', {'id': attendedRegistration.id}) }}" class="btn btn-primary">Submit Feedback</a>
+                    {% else %}
+                        <div class="alert alert-info">
+                            You can submit feedback after attending the conference.
+                        </div>
+                    {% endif %}
+                {% elseif app.user %}
+                    <div class="alert alert-info">
+                        You need to register and attend this conference to submit feedback.
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <a href="{{ path('app_login') }}">Login</a> or <a href="{{ path('app_register') }}">Register</a> to submit feedback for this conference.
+                    </div>
+                {% endif %}
+
+                <div class="mt-3">
+                    <a href="{{ path('app_feedback_stats', {'id': conference.id}) }}" class="btn btn-outline-primary">View Feedback Statistics</a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

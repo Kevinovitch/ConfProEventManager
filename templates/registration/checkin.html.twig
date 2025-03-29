@@ -1,0 +1,81 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Check-in Participants - ConfPro Event Manager{% endblock %}
+
+{% block body %}
+    <h1>Check-in Participants</h1>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">QR Code Scanner</h2>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <p>In a production environment, this would use a camera to scan QR codes.</p>
+                        <p>For this demo, please enter the QR code manually.</p>
+                    </div>
+
+                    <form method="post">
+                        <div class="mb-3">
+                            <label for="qrCode" class="form-label">QR Code</label>
+                            <input type="text" id="qrCode" name="qrCode" class="form-control" placeholder="Enter QR code" required autofocus>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Check In</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">Participant Information</h2>
+                </div>
+                <div class="card-body">
+                    {% if error %}
+                        <div class="alert alert-danger">{{ error }}</div>
+                    {% endif %}
+
+                    {% if success %}
+                        <div class="alert alert-success">{{ success }}</div>
+                    {% endif %}
+
+                    {% if registration %}
+                        <div class="participant-info">
+                            <h3>{{ registration.user.name }}</h3>
+                            <p><strong>Email:</strong> {{ registration.user.email }}</p>
+                            <p><strong>Conference:</strong> {{ registration.conference.title }}</p>
+                            <p><strong>Registered on:</strong> {{ registration.registeredAt|date('F j, Y') }}</p>
+                            <p><strong>Status:</strong>
+                                {% if registration.attended %}
+                                    <span class="badge bg-success">Already Checked In</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Not Checked In</span>
+                                {% endif %}
+                            </p>
+
+                            {% if not registration.attended %}
+                                <form method="post">
+                                    <input type="hidden" name="qrCode" value="{{ registration.qrCode }}">
+                                    <button type="submit" class="btn btn-success">Confirm Check-in</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p class="text-muted">Scan a QR code to see participant information</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ path('app_registration_dashboard') }}" class="btn btn-outline-secondary">
+            Back to Registration Dashboard
+        </a>
+    </div>
+{% endblock %}

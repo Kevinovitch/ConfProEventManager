@@ -1,0 +1,43 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Notifications - ConfPro Event Manager{% endblock %}
+
+{% block body %}
+    <h1>Notification Management</h1>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2 class="h4 mb-0">Automated Reminders</h2>
+        </div>
+        <div class="card-body">
+            <p>The system automatically sends several types of notifications:</p>
+
+            <ul>
+                <li><strong>Registration Confirmations</strong> - Sent immediately when a participant registers for a conference</li>
+                <li><strong>Conference Reminders</strong> - Sent to participants and presenters one day before the conference</li>
+                <li><strong>Feedback Requests</strong> - Sent to attendees one day after the conference</li>
+            </ul>
+
+            <div class="alert alert-info">
+                <h3 class="h5">Scheduled Commands</h3>
+                <p>The following commands are configured to run automatically:</p>
+                <ul>
+                    <li><code>app:send-reminders</code> - Runs daily to send reminders for conferences scheduled for the next day</li>
+                    <li><code>app:send-feedback-requests</code> - Runs daily to send feedback requests for conferences that ended the previous day</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2 class="h4 mb-0">Manual Notifications</h2>
+        </div>
+        <div class="card-body">
+            <p>You can manually send notifications for individual conferences from their respective detail pages.</p>
+            <p>Go to the conference details page and look for the "Administration" section at the bottom.</p>
+
+            <a href="{{ path('app_conferences_index') }}" class="btn btn-primary">Go to Conferences</a>
+        </div>
+    </div>
+{% endblock %}

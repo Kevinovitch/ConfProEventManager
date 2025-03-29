@@ -1,0 +1,52 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Conferences - ConfPro Event Manager{% endblock %}
+
+{% block body %}
+    <h1>Conferences</h1>
+
+    {% if is_granted('ROLE_PRESENTER') %}
+        <div class="mb-4">
+            <a href="{{ path('app_conferences_new') }}" class="btn btn-primary">Create New Conference</a>
+        </div>
+    {% endif %}
+
+    <div class="row">
+        {% for conference in conferences %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        {% if conference.status == 'submitted' %}
+                            <span class="badge bg-secondary">Submitted</span>
+                        {% elseif conference.status == 'under_validation' %}
+                            <span class="badge bg-warning">Under Validation</span>
+                        {% elseif conference.status == 'scheduled' %}
+                            <span class="badge bg-success">Scheduled</span>
+                        {% elseif conference.status == 'archived' %}
+                            <span class="badge bg-info">Archived</span>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">{{ conference.title }}</h5>
+                        <p class="card-text">{{ conference.description|slice(0, 100) }}{% if conference.description|length > 100 %}...{% endif %}</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ path('app_conferences_show', {'id': conference.id}) }}" class="btn btn-sm btn-outline-primary">View Details</a>
+
+                        {% if conference.presenter == app.user and conference.status == 'submitted' %}
+                            <form method="post" action="{{ path('app_conferences_submit', {'id': conference.id}) }}" class="d-inline">
+                                <button class="btn btn-sm btn-outline-success">Submit for Validation</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    No conferences found.
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

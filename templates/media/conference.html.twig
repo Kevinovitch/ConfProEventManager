@@ -1,0 +1,89 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Media - {{ conference.title }} - ConfPro Event Manager{% endblock %}
+
+{% block body %}
+
+    <h1>Media for: {{ conference.title }}</h1>
+
+    <div class="mb-4">
+        <a href="{{ path('app_conferences_show', {'id': conference.id}) }}" class="btn btn-outline-secondary">
+            Back to Conference
+        </a>
+
+        {% if can_upload %}
+            <a href="{{ path('app_media_upload', {'id': conference.id}) }}" class="btn btn-primary">
+                Upload New Media
+            </a>
+        {% endif %}
+    </div>
+
+    {% if slides|length == 0 and videos|length == 0 %}
+        <div class="alert alert-info">
+            No media has been uploaded for this conference yet.
+        </div>
+    {% else %}
+
+        {% if slides|length > 0 %}
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h5 mb-0">Slides</h2>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for slide in slides %}
+                            <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">{{ slide.title }}</h5>
+                                    <small class="text-muted">Uploaded on {{ slide.uploadedAt|date('F j, Y') }}</small>
+                                </div>
+                                <div class="d-flex">
+                                    <a href="{{ slide.url }}" class="btn btn-sm btn-outline-primary me-2" target="_blank">View</a>
+
+                                    {% if can_upload %}
+                                        <form method="post" action="{{ path('app_media_delete', {'id': slide.id}) }}" onsubmit="return confirm('Are you sure you want to delete this item?');">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ slide.id) }}">
+                                            <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if videos|length > 0 %}
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h2 class="h5 mb-0">Videos</h2>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for video in videos %}
+                            <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">{{ video.title }}</h5>
+                                    <small class="text-muted">Uploaded on {{ video.uploadedAt|date('F j, Y') }}</small>
+                                </div>
+                                <div class="d-flex">
+                                    <a href="{{ video.url }}" class="btn btn-sm btn-outline-primary me-2" target="_blank">Watch</a>
+
+                                    {% if can_upload %}
+                                        <form method="post" action="{{ path('app_media_delete', {'id': video.id}) }}" onsubmit="return confirm('Are you sure you want to delete this item?');">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ video.id) }}">
+                                            <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+    {% endif %}
+
+{% endblock %}

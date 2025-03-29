@@ -1,0 +1,52 @@
+framework:
+    workflows:
+        conference:
+            type: 'state_machine'
+            audit_trail:
+                enabled: true
+            marking_store:
+                type: 'method'
+                property: 'status'
+            supports:
+                - App\Entity\Conference
+            initial_marking: 'submitted'
+            places:
+                - 'submitted'
+                - 'under_validation'
+                - 'scheduled'
+                - 'archived'
+            transitions:
+                to_validation:
+                    from: 'submitted'
+                    to: 'under_validation'
+                to_scheduled:
+                    from: 'under_validation'
+                    to: 'scheduled'
+                to_archived:
+                    from: 'scheduled'
+                    to: 'archived'
+                back_to_submitted:
+                    from: 'under_validation'
+                    to: 'submitted'
+
+        moderation_request:
+            type: 'state_machine'
+            audit_trail:
+                enabled: true
+            marking_store:
+                type: 'method'
+                property: 'status'
+            supports:
+                - App\Entity\ModerationRequest
+            initial_marking: 'pending'
+            places:
+                - 'pending'
+                - 'accepted'
+                - 'rejected'
+            transitions:
+                accept:
+                    from: 'pending'
+                    to: 'accepted'
+                reject:
+                    from: 'pending'
+                    to: 'rejected'

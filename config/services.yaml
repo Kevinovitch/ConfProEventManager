@@ -4,7 +4,7 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
-
+    app.media_directory: '%kernel.project_dir%/public/uploads/media'
 services:
     # default configuration for services in *this* file
     _defaults:
@@ -22,3 +22,37 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    app.workflow.conference:
+        alias: 'debug.state_machine.conference'
+        public: true
+
+    app.workflow.moderation_request:
+        alias: 'debug.state_machine.moderation_request'
+        public: true
+
+    App\Service\MediaService:
+        arguments:
+            $uploadDir: '%app.media_directory%'
+
+    # Workflow configuration
+    App\Service\ConferenceService:
+        arguments:
+            $conferenceStateMachine: '@app.workflow.conference'
+
+    App\Service\ModerationService:
+        arguments:
+            $moderationRequestStateMachine: '@app.workflow.moderation_request'
+            $conferenceStateMachine: '@app.workflow.conference'
+
+    App\Controller\Api\ConferenceApiController:
+        arguments:
+            $conferenceStateMachine: '@app.workflow.conference'
+
+    App\Controller\Api\ModerationApiController:
+        arguments:
+            $moderationRequestStateMachine: '@app.workflow.moderation_request'
+
+    App\Command\WorkflowTransitionCommand:
+        arguments:
+            $conferenceStateMachine: '@app.workflow.conference'

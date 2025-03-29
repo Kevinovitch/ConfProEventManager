@@ -1,0 +1,67 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Sessions - ConfPro Event Manager{% endblock %}
+
+{% block body %}
+    <h1>Sessions Schedule</h1>
+
+    {% if is_granted('ROLE_ADMIN') %}
+        <div class="mb-4">
+            <a href="{{ path('app_sessions_new') }}" class="btn btn-primary">Create New Session</a>
+        </div>
+    {% endif %}
+
+    {% if sessions_by_date is empty %}
+        <div class="alert alert-info">
+            No sessions scheduled yet.
+        </div>
+    {% else %}
+        {% for date, sessions in sessions_by_date %}
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h4 mb-0">{{ date|date('l, F j, Y') }}</h2>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Conference</th>
+                                <th>Room</th>
+                                <th>Presenter</th>
+                                {% if is_granted('ROLE_ADMIN') %}
+                                    <th>Actions</th>
+                                {% endif %}
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for session in sessions %}
+                                <tr>
+                                    <td>{{ session.startTime|date('H:i') }} - {{ session.endTime|date('H:i') }}</td>
+                                    <td>
+                                        <a href="{{ path('app_conferences_show', {'id': session.conference.id}) }}">
+                                            {{ session.conference.title }}
+                                        </a>
+                                    </td>
+                                    <td>{{ session.room }}</td>
+                                    <td>{{ session.conference.presenter.name }}</td>
+                                    {% if is_granted('ROLE_ADMIN') %}
+                                        <td>
+                                            <a href="{{ path('app_sessions_edit', {'id': session.id}) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                            <form method="post" action="{{ path('app_sessions_delete', {'id': session.id}) }}" class="d-inline">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ session.id) }}">
+                                                <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                            </form>
+                                        </td>
+                                    {% endif %}
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endblock %}
