@@ -40,7 +40,7 @@ class MediaService
         $tempPath = $file->getPathname();
         $targetPath = $this->uploadDir . '/' . $newFilename;
 
-        // On utilise copy() au lieu de move() pour éviter les problèmes de systèmes de fichiers croisés WSL/Windows
+        // We use copy() instead of move() to avoid WSL/Windows cross-file system problems.
         if (!copy($tempPath, $targetPath)) {
             // Log the error if the copy fails
             throw new \RuntimeException("Failure of the copy of '$tempPath' to '$targetPath'");
